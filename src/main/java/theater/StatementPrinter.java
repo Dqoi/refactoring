@@ -46,26 +46,30 @@ public class StatementPrinter {
                 + invoice.getCustomer() + System.lineSeparator());
         final NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
 
-        for (Performance performance : invoice.getPerformances()) {
-
-            final int thisAmount = getAmount(performance);
+        for (Performance p : invoice.getPerformances()) {
 
             // add volume credits
-            volumeCredits += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-            // add extra credit for every five comedy attendees
-            if ("comedy".equals(getPlay(performance).getType())) {
-                volumeCredits += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-            }
+            volumeCredits += getVolumeCredits(p);
 
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
-                    getPlay(performance).getName(), format.format(thisAmount / Constants.PERCENT_FACTOR), performance.getAudience()));
-            totalAmount += thisAmount;
+                    getPlay(p).getName(), format.format(getAmount(p) / Constants.PERCENT_FACTOR), p.getAudience()));
+            totalAmount += getAmount(p);
         }
         result.append(String.format("Amount owed is %s%n",
                 format.format(totalAmount / Constants.PERCENT_FACTOR)));
         result.append(String.format("You earned %s credits%n", volumeCredits));
         return result.toString();
+    }
+
+    private int getVolumeCredits(Performance performance) {
+        int result = 0;
+        result += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+        // add extra credit for every five comedy attendees
+        if ("comedy".equals(getPlay(performance).getType())) {
+            result += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+        }
+        return result;
     }
 
     private Play getPlay(Performance performance) {
